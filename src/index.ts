@@ -1,12 +1,19 @@
 import express from "express";
 import { config } from "./config";
+import routes from "./routes";
 const app = express();
 
+app.use("/api", routes);
+
 const startServer = async () => {
-  const port = config.get("port");
-  app.listen(port, () => {
-    console.log(`Server is running on port http://localhost:${port}`);
-  });
+  try {
+    const port = config.get("port");
+    app.listen(port, () => {
+      console.log(`Server is running on port http://localhost:${port}.`);
+    });
+  } catch (error) {
+    console.log(`Server failed to start. Please check the following.`);
+  }
 };
 
 startServer();
