@@ -3,7 +3,7 @@ import { config } from "./config";
 import routes from "./routes";
 const app = express();
 
-app.use("/api", routes);
+app.use(routes);
 
 const startServer = async () => {
   try {
