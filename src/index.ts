@@ -3,10 +3,20 @@ import { config } from "./config";
 import routes from "./routes";
 const app = express();
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// app.use(express.json());
+// app.use(express.urlencoded({ extended: false }));
 
-app.use(routes);
+app.use((req, res, next) => {
+  req.on("data", (chunk) => {
+    req.body = JSON.parse(chunk);
+    next();
+  });
+}, routes);
+
+app.get("/test", (req, res, next) => {
+  console.log(req.body);
+  next();
+});
 
 const startServer = async () => {
   try {
