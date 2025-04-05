@@ -1,6 +1,6 @@
 import { RequestHandler } from "express";
 import crypto from "crypto";
-import { UserModel, VerificationToken } from "@/models";
+import { UserModel, VerificationTokenModel } from "@/models";
 
 class AuthCtrl {
   static generateAuthLink: RequestHandler = async (req, res) => {
@@ -9,11 +9,14 @@ class AuthCtrl {
     if (!user) {
       user = await UserModel.create({ email });
     }
-    const randomToken = crypto.randomBytes(36).toString("hex");
-    console.log(randomToken);
 
-    await VerificationToken.create<{ userId: string }>({
-      userId: user._id.toString(),
+    const userId = user._id.toString();
+    await VerificationTokenModel.findOneAndDelete({ userId });
+
+    const randomToken = crypto.randomBytes(36).toString("hex");
+
+    await VerificationTokenModel.create<{ userId: string }>({
+      userId,
       token: randomToken,
     });
     res.json({ ok: true });
