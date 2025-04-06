@@ -1,6 +1,8 @@
 import { RequestHandler } from "express";
 import crypto from "crypto";
 import { UserModel, VerificationTokenModel } from "@/models";
+import mail from "@/utils/mail";
+import { config } from "@/config";
 
 class AuthCtrl {
   static generateAuthLink: RequestHandler = async (req, res) => {
@@ -19,7 +21,16 @@ class AuthCtrl {
       userId,
       token: randomToken,
     });
-    res.json({ ok: true });
+
+    const link = `${config.get(
+      "verificationLink"
+    )}?token=${randomToken}&userId=${userId}`;
+
+    mail.sendVerificationMail({
+      link,
+      to: user.email,
+    });
+    res.json({ message: "Plesae check you email for link." });
   };
 }
 
