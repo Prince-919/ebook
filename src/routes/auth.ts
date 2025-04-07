@@ -9,5 +9,6 @@ authRouter.post(
   validate(emailValidationSchema),
   AuthCtrl.generateAuthLink
 );
+authRouter.get("/verify", AuthCtrl.verifyAuthToken);
 
 export default authRouter;
