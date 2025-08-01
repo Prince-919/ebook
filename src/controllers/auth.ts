@@ -5,6 +5,8 @@ import mail from "@/utils/mail";
 import asyncHandler from "express-async-handler";
 import { formatUserProfile, sendErrorResponse } from "@/utils/helper";
 import jwt from "jsonwebtoken";
+import { cloudinary } from "@/cloud";
+import { uploadAvatarToCloudinary } from "@/utils/fileUpload";
 
 export const generateAuthLink: RequestHandler = asyncHandler(
   async (req, res) => {
@@ -76,12 +78,11 @@ export const verifyAuthToken: RequestHandler = asyncHandler(
       sameSite: "strict",
       expires: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
     });
-    // res.redirect(
-    //   `${process.env.AUTH_SUCCESS_URL}?profile=${JSON.stringify(
-    //     formatUserProfile(user)
-    //   )}`
-    // );
-    res.send();
+    res.redirect(
+      `${process.env.AUTH_SUCCESS_URL}?profile=${JSON.stringify(
+        formatUserProfile(user)
+      )}`
+    );
   }
 );
 
@@ -92,6 +93,30 @@ export const sendProfileInfo: RequestHandler = asyncHandler(
     });
   }
 );
+export const updateProfile: RequestHandler = asyncHandler(async (req, res) => {
+  console.log("req.files:", req.files);
+  const user = await UserModel.findByIdAndUpdate(
+    req.user.id,
+    {
+      name: req.body.name,
+      signedUp: true,
+    },
+    { new: true }
+  );
+  if (!user) {
+    return sendErrorResponse({
+      status: 404,
+      message: "Something went wrong, user not found!",
+      res,
+    });
+  }
+  const file = req.files?.avatar;
+  if (file && !Array.isArray(file)) {
+    user.avatar = await uploadAvatarToCloudinary(file, user.avatar?.id);
+    await user.save();
+  }
+  res.json({ profile: formatUserProfile(user) });
+});
 export const logout: RequestHandler = asyncHandler(async (req, res) => {
   res.clearCookie("authToken").send();
 });
