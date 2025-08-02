@@ -6,16 +6,10 @@ import asyncHandler from "express-async-handler";
 import { formatUserProfile, sendErrorResponse } from "@/utils/helper";
 import jwt from "jsonwebtoken";
 import { cloudinary } from "@/cloud";
-import { uploadAvatarToCloudinary } from "@/utils/fileUpload";
+import { updateAvatarToCloudinary } from "@/utils/fileUpload";
 
 export const generateAuthLink: RequestHandler = asyncHandler(
   async (req, res) => {
-    // Step 1: Generate Unique token for every users
-    // Step 2: Store that token securely inside the database so that we can validate it in feture.
-    // Step 3: Create a link which include that secure token and user information
-    // Step 4: Send that link to users email address.
-    // Step 5: Notify user to look inside the email to get the login link.
-
     const { email } = req.body;
     let user = await UserModel.findOne({ email });
     if (!user) {
@@ -65,7 +59,6 @@ export const verifyAuthToken: RequestHandler = asyncHandler(
       });
     }
     await VerificationTokenModel.findByIdAndDelete(verificationToken._id);
-
     // TODO: authentication
     const payload = { userId: user._id };
     const authToken = jwt.sign(payload, process.env.JWT_SECRET!, {
@@ -93,8 +86,8 @@ export const sendProfileInfo: RequestHandler = asyncHandler(
     });
   }
 );
+
 export const updateProfile: RequestHandler = asyncHandler(async (req, res) => {
-  console.log("req.files:", req.files);
   const user = await UserModel.findByIdAndUpdate(
     req.user.id,
     {
@@ -112,11 +105,12 @@ export const updateProfile: RequestHandler = asyncHandler(async (req, res) => {
   }
   const file = req.files?.avatar;
   if (file && !Array.isArray(file)) {
-    user.avatar = await uploadAvatarToCloudinary(file, user.avatar?.id);
+    user.avatar = await updateAvatarToCloudinary(file, user.avatar?.id);
     await user.save();
   }
   res.json({ profile: formatUserProfile(user) });
 });
+
 export const logout: RequestHandler = asyncHandler(async (req, res) => {
   res.clearCookie("authToken").send();
 });
