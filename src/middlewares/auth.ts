@@ -15,6 +15,7 @@ declare global {
         role: "user" | "author";
         avatar?: string;
         signedUp: boolean;
+        authorId?: string;
       };
     }
   }
@@ -43,4 +44,12 @@ export const isAuth: RequestHandler = asyncHandler(async (req, res, next) => {
 
   req.user = formatUserProfile(user);
   next();
+});
+
+export const isAuthor: RequestHandler = asyncHandler((req, res, next) => {
+  if (req.user.role === "author") {
+    next();
+  } else {
+    return sendErrorResponse({ status: 401, message: "Invalid request!", res });
+  }
 });
