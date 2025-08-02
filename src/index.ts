@@ -1,6 +1,6 @@
 import "./db/connect";
 import express from "express";
-import { authRouter } from "./routes";
+import { authorRouter, authRouter } from "./routes";
 import { errorHandler } from "./middlewares/error";
 import cookieParser from "cookie-parser";
 
@@ -12,6 +12,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use("/auth", authRouter);
+app.use("/author", authorRouter);
 
 app.use(errorHandler);
 

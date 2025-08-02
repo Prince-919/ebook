@@ -3,6 +3,7 @@ import { formatUserProfile, sendErrorResponse } from "@/utils/helper";
 import { RequestHandler } from "express";
 import asyncHandler from "express-async-handler";
 import jwt from "jsonwebtoken";
+import { ObjectId } from "mongoose";
 
 declare global {
   namespace Express {
@@ -13,6 +14,7 @@ declare global {
         email: string;
         role: "user" | "author";
         avatar?: string;
+        signedUp: boolean;
       };
     }
   }
