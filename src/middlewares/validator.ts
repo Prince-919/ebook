@@ -39,7 +39,11 @@ export const newAuthorSchema = z.object({
     .optional(),
 });
 
-export const newBookSchema = z.object({
+const commonBookSchema = {
+  uploadMethod: z.enum(["aws", "local"], {
+    required_error: "Please define a valid uploadMethod!",
+    invalid_type_error: "uploadMethod needs to be either aws or local!",
+  }),
   title: z
     .string({
       required_error: "Title is missing!",
@@ -107,41 +111,51 @@ export const newBookSchema = z.object({
       (price) => price.sale <= price.mrp,
       "Sale price should be less then MRP!"
     ),
-  fileInfo: z
-    .string({
-      required_error: "File is missing!",
-      invalid_type_error: "Invalid file!",
+};
+
+const fileInfo = z
+  .string({
+    required_error: "File is missing!",
+    invalid_type_error: "Invalid file!",
+  })
+  .transform((value, ctx) => {
+    try {
+      return JSON.parse(value);
+    } catch (error) {
+      ctx.addIssue({ code: "custom", message: "Invalid file info!" });
+      return z.NEVER;
+    }
+  })
+  .pipe(
+    z.object({
+      name: z
+        .string({
+          required_error: "fileInfo.name is missing!",
+          invalid_type_error: "Invalid fileInfo.name!",
+        })
+        .trim(),
+      type: z
+        .string({
+          required_error: "fileInfo.type is missing!",
+          invalid_type_error: "Invalid fileInfo.type!",
+        })
+        .trim(),
+      size: z
+        .number({
+          required_error: "fileInfo.size is missing!",
+          invalid_type_error: "Invalid sale fileInfo.size!",
+        })
+        .nonnegative("Invalid fileInfo.size!"),
     })
-    .transform((value, ctx) => {
-      try {
-        return JSON.parse(value);
-      } catch (error) {
-        ctx.addIssue({ code: "custom", message: "Invalid file info!" });
-        return z.NEVER;
-      }
-    })
-    .pipe(
-      z.object({
-        name: z
-          .string({
-            required_error: "fileInfo.name is missing!",
-            invalid_type_error: "Invalid fileInfo.name!",
-          })
-          .trim(),
-        type: z
-          .string({
-            required_error: "fileInfo.type is missing!",
-            invalid_type_error: "Invalid fileInfo.type!",
-          })
-          .trim(),
-        size: z
-          .number({
-            required_error: "fileInfo.size is missing!",
-            invalid_type_error: "Invalid sale fileInfo.size!",
-          })
-          .nonnegative("Invalid fileInfo.size!"),
-      })
-    ),
+  );
+export const newBookSchema = z.object({
+  ...commonBookSchema,
+  fileInfo,
+});
+export const updateBookSchema = z.object({
+  ...commonBookSchema,
+  slug: z.string({ message: "Invalid slug!" }).trim(),
+  fileInfo: fileInfo.optional(),
 });
 
 export const validate = <T extends ZodRawShape>(

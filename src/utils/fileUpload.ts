@@ -2,7 +2,6 @@ import { cloudinary } from "@/cloud";
 import { File } from "formidable";
 import fs from "fs";
 import path from "path";
-import slugify from "slugify";
 
 export const updateAvatarToCloudinary = async (
   file: File,

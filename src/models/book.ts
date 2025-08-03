@@ -77,7 +77,7 @@ const bookSchema = new Schema<BookDoc>({
     },
   },
   cover: {
-    type: String,
+    url: String,
     id: String,
   },
   fileInfo: {
