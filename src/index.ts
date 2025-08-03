@@ -3,8 +3,10 @@ import express from "express";
 import path from "path";
 import cookieParser from "cookie-parser";
 import { errorHandler } from "./middlewares/error";
-import { authorRouter, authRouter, bookRouter } from "./routes";
 import formidable from "formidable";
+import { authorRouter, authRouter, bookRouter, reviewRouter } from "./routes";
+import { ReviewModel } from "./models";
+import { Types } from "mongoose";
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -19,16 +21,23 @@ app.use("/books", express.static(publicPath));
 app.use("/auth", authRouter);
 app.use("/author", authorRouter);
 app.use("/book", bookRouter);
+app.use("/review", reviewRouter);
 
-app.post("/test", async (req, res) => {
-  const form = formidable({
-    uploadDir: path.join(__dirname, "./books"),
-    filename(name, ext, part, form) {
-      return name + ".jpg";
+app.get("/test", async (req, res) => {
+  const [result] = await ReviewModel.aggregate<{ averageRating: number }>([
+    {
+      $match: {
+        book: new Types.ObjectId("688ee31b7bcb9a70e7787801"),
+      },
     },
-  });
-  await form.parse(req);
-  res.json({});
+    {
+      $group: {
+        _id: null,
+        averageRating: { $avg: "$rating" },
+      },
+    },
+  ]);
+  res.json({ review: result?.averageRating.toFixed(1) });
 });
 
 app.use(errorHandler);

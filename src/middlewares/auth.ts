@@ -1,9 +1,9 @@
-import { UserModel } from "@/models";
-import { formatUserProfile, sendErrorResponse } from "@/utils/helper";
-import { RequestHandler } from "express";
-import asyncHandler from "express-async-handler";
 import jwt from "jsonwebtoken";
-import { ObjectId } from "mongoose";
+import asyncHandler from "express-async-handler";
+import { RequestHandler } from "express";
+import { UserModel } from "@/models";
+import { AddReviewRequestHandler } from "@/types";
+import { formatUserProfile, sendErrorResponse } from "@/utils/helper";
 
 declare global {
   namespace Express {
@@ -45,6 +45,23 @@ export const isAuth: RequestHandler = asyncHandler(async (req, res, next) => {
   req.user = formatUserProfile(user);
   next();
 });
+
+export const isPurchasedByTheUser: AddReviewRequestHandler = asyncHandler(
+  async (req, res, next) => {
+    const user = await UserModel.findOne({
+      _id: req.user.id,
+      books: req.body.bookId,
+    });
+    if (!user) {
+      return sendErrorResponse({
+        status: 403,
+        message: "Sorry your are not allowed to add review!",
+        res,
+      });
+    }
+    next();
+  }
+);
 
 export const isAuthor: RequestHandler = asyncHandler((req, res, next) => {
   if (req.user.role === "author") {

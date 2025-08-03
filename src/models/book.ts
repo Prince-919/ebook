@@ -8,6 +8,7 @@ export interface BookDoc {
   language: string;
   publishedAt: Date;
   publicationName: string;
+  averageRating?: number;
   genre: string;
   price: {
     mrp: number;
@@ -64,6 +65,7 @@ const bookSchema = new Schema<BookDoc>({
     type: Date,
     required: true,
   },
+  averageRating: Number,
   price: {
     type: Object,
     required: true,
