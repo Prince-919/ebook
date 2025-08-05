@@ -6,7 +6,12 @@ import {
   updateBookSchema,
   validate,
 } from "@/middlewares/validator";
-import { createNewBook, updateBook } from "@/controllers/book";
+import {
+  createNewBook,
+  getAllPurchasedBooks,
+  getBooksPublicDetails,
+  updateBook,
+} from "@/controllers/book";
 
 const bookRouter = Router();
 
@@ -26,5 +31,7 @@ bookRouter.patch(
   validate(updateBookSchema),
   updateBook
 );
+bookRouter.get("/list", isAuth, getAllPurchasedBooks);
+bookRouter.get("/details/:slug", getBooksPublicDetails);
 
 export default bookRouter;
