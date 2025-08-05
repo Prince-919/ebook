@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import asyncHandler from "express-async-handler";
 import { RequestHandler } from "express";
 import { UserModel } from "@/models";
-import { AddReviewRequestHandler } from "@/types";
+import { IsPurchasedByTheUserRequestHandler } from "@/types";
 import { formatUserProfile, sendErrorResponse } from "@/utils/helper";
 
 declare global {
@@ -46,8 +46,8 @@ export const isAuth: RequestHandler = asyncHandler(async (req, res, next) => {
   next();
 });
 
-export const isPurchasedByTheUser: AddReviewRequestHandler = asyncHandler(
-  async (req, res, next) => {
+export const isPurchasedByTheUser: IsPurchasedByTheUserRequestHandler =
+  asyncHandler(async (req, res, next) => {
     const user = await UserModel.findOne({
       _id: req.user.id,
       books: req.body.bookId,
@@ -55,13 +55,12 @@ export const isPurchasedByTheUser: AddReviewRequestHandler = asyncHandler(
     if (!user) {
       return sendErrorResponse({
         status: 403,
-        message: "Sorry your are not allowed to add review!",
+        message: "Sorry we didn't found the book inside your library!",
         res,
       });
     }
     next();
-  }
-);
+  });
 
 export const isAuthor: RequestHandler = asyncHandler((req, res, next) => {
   if (req.user.role === "author") {
