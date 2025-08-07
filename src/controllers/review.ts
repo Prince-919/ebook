@@ -3,7 +3,13 @@ import { AddReviewRequestHandler } from "@/types";
 import { BookModel, ReviewModel } from "@/models";
 import { RequestHandler } from "express";
 import { sendErrorResponse } from "@/utils/helper";
-import { isValidObjectId, Types } from "mongoose";
+import { isValidObjectId, ObjectId, Types } from "mongoose";
+
+interface PopulatedUser {
+  _id: ObjectId;
+  name: string;
+  avatar: { id: string; url: string };
+}
 
 export const addReview: AddReviewRequestHandler = asyncHandler(
   async (req, res) => {
@@ -53,3 +59,31 @@ export const getReview: RequestHandler = asyncHandler(async (req, res) => {
   }
   res.json({ content: review.content, rating: review.rating });
 });
+
+export const getPublicReviews: RequestHandler = asyncHandler(
+  async (req, res) => {
+    const reviews = await ReviewModel.find({
+      book: req.params.bookId,
+    }).populate<{
+      user: PopulatedUser;
+    }>({
+      path: "user",
+      select: "name avatar",
+    });
+    res.json(
+      reviews.map((r) => {
+        return {
+          id: r._id,
+          content: r.content,
+          date: r.createdAt.toISOString().split("T")[0],
+          rating: r.rating,
+          user: {
+            id: r.user._id,
+            name: r.user.name,
+            avatar: r.user.avatar,
+          },
+        };
+      })
+    );
+  }
+);

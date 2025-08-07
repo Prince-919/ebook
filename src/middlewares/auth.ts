@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import asyncHandler from "express-async-handler";
 import { RequestHandler } from "express";
-import { UserModel } from "@/models";
+import { BookModel, UserModel } from "@/models";
 import { IsPurchasedByTheUserRequestHandler } from "@/types";
 import { formatUserProfile, sendErrorResponse } from "@/utils/helper";
 
@@ -69,3 +69,36 @@ export const isAuthor: RequestHandler = asyncHandler((req, res, next) => {
     return sendErrorResponse({ status: 401, message: "Invalid request!", res });
   }
 });
+export const isValidReadingRequest: RequestHandler = asyncHandler(
+  async (req, res, next) => {
+    const url = req.url;
+    const regex = new RegExp("/([^/?]+.epub)");
+    const regexMatch = url.match(regex);
+
+    if (!regexMatch) {
+      return sendErrorResponse({
+        status: 403,
+        message: "Invalid request!",
+        res,
+      });
+    }
+    const bookFileId = regexMatch[1];
+    const book = await BookModel.findOne({ "fileInfo.id": bookFileId });
+    if (!book) {
+      return sendErrorResponse({
+        status: 404,
+        message: "Book not found!",
+        res,
+      });
+    }
+    const user = await UserModel.findOne({ _id: req.user.id, books: book._id });
+    if (!user) {
+      return sendErrorResponse({
+        status: 403,
+        message: "Unauthorized request!",
+        res,
+      });
+    }
+    next();
+  }
+);

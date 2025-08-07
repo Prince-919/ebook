@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { addReview, getReview } from "@/controllers/review";
+import { addReview, getPublicReviews, getReview } from "@/controllers/review";
 import { isAuth, isPurchasedByTheUser } from "@/middlewares/auth";
 import { newReviewSchema, validate } from "@/middlewares/validator";
 
@@ -13,5 +13,6 @@ reviewRouter.post(
   addReview
 );
 reviewRouter.get("/:bookId", isAuth, getReview);
+reviewRouter.get("/list/:bookId", getPublicReviews);
 
 export default reviewRouter;

@@ -1,4 +1,4 @@
-import { AuthorModel, BookModel, UserModel } from "@/models";
+import { AuthorModel, BookModel, HistoryModel, UserModel } from "@/models";
 import { BookDoc } from "@/models/book";
 import { CreateBookRequestHandler, UpdateBookRequestHandler } from "@/types";
 import {
@@ -13,6 +13,7 @@ import fs from "fs";
 import slugify from "slugify";
 import { cloudinary } from "@/cloud";
 import { RequestHandler } from "express";
+import { Settings } from "@/models/history";
 
 interface PopulatedBooks {
   cover: {
@@ -244,6 +245,7 @@ export const getBooksPublicDetails: RequestHandler = asyncHandler(
       language,
       publishedAt,
       publicationName,
+      averageRating,
       price: { mrp, sale },
       fileInfo,
     } = book;
@@ -259,6 +261,7 @@ export const getBooksPublicDetails: RequestHandler = asyncHandler(
       fileInfo,
       publishedAt: publishedAt.toISOString().split("T")[0],
       cover: cover?.url,
+      rating: averageRating?.toFixed(1),
       price: {
         mrp: (mrp / 100).toFixed(2),
         sale: (sale / 100).toFixed(2),
@@ -268,6 +271,78 @@ export const getBooksPublicDetails: RequestHandler = asyncHandler(
         name: author.name,
         slug: author.slug,
       },
+    });
+  }
+);
+
+export const getBookByGenre: RequestHandler = asyncHandler(async (req, res) => {
+  const books = await BookModel.find({ genre: req.params.genre }).limit(5);
+
+  res.json({
+    books: books.map((book) => {
+      const {
+        _id,
+        title,
+        cover,
+        averageRating,
+        genre,
+        slug,
+        price: { mrp, sale },
+      } = book;
+      return {
+        id: _id,
+        title,
+        genre,
+        slug,
+        cover: cover?.url,
+        rating: averageRating?.toFixed(1),
+        price: {
+          mrp: (mrp / 100).toFixed(2),
+          sale: (sale / 100).toFixed(2),
+        },
+      };
+    }),
+  });
+});
+
+export const generateBookAccessUrl: RequestHandler = asyncHandler(
+  async (req, res) => {
+    const { slug } = req.params;
+    const book = await BookModel.findOne({ slug });
+    if (!book) {
+      return sendErrorResponse({
+        status: 404,
+        message: "Book not found!",
+        res,
+      });
+    }
+    const user = await UserModel.findOne({ _id: req.user.id, books: book._id });
+    if (!user) {
+      return sendErrorResponse({
+        status: 404,
+        message: "User not found!",
+        res,
+      });
+    }
+    const history = await HistoryModel.findOne({
+      reader: req.user.id,
+      book: book._id,
+    });
+    const settings: Settings = {
+      lastLocation: "",
+      highlights: [],
+    };
+
+    if (history) {
+      settings.highlights = history.highlights.map((h) => ({
+        fill: h.fill,
+        selection: h.selection,
+      }));
+      settings.lastLocation = history.lastLocation;
+    }
+    res.json({
+      settings,
+      url: `${process.env.BOOK_API_URL}/${book.fileInfo?.id}`,
     });
   }
 );

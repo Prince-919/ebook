@@ -1,7 +1,11 @@
 import { Router } from "express";
-import { isAuth } from "@/middlewares/auth";
+import { isAuth, isAuthor } from "@/middlewares/auth";
 import { newAuthorSchema, validate } from "@/middlewares/validator";
-import { getAuthorDetails, registerAuthor } from "@/controllers/author";
+import {
+  getAuthorDetails,
+  registerAuthor,
+  updateAuthor,
+} from "@/controllers/author";
 
 const authorRouter = Router();
 
@@ -10,6 +14,13 @@ authorRouter.post(
   isAuth,
   validate(newAuthorSchema),
   registerAuthor
+);
+authorRouter.patch(
+  "/",
+  isAuth,
+  isAuthor,
+  validate(newAuthorSchema),
+  updateAuthor
 );
 authorRouter.get("/:slug", getAuthorDetails);
 
